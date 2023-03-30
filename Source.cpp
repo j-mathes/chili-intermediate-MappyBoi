@@ -5,13 +5,20 @@
 
 #include "Vec2.h"
 
-struct Pube
+struct MyStruct
 {
 	std::string str;
 	Vei2 vec;
 	int n;
 	char m;
 };
+
+template <class T>
+void hash_combine(std::size_t& seed, const T& v)
+{
+	std::hash<T> hasher;
+	seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
 
 namespace std
 {
@@ -27,12 +34,35 @@ namespace std
 			return hashx;
 		}
 	};
+
+	template <> struct hash<MyStruct>
+	{
+		size_t operator()(const MyStruct& ms) const
+		{
+			auto seed = std::hash<std::string>()(ms.str);
+			hash_combine(seed, ms.vec);
+			hash_combine(seed, ms.n);
+			hash_combine(seed, ms.m);
+			return seed;
+		}
+	};
+
+	template <> struct equal_to<MyStruct>
+	{
+		bool operator()(const MyStruct& lhs, const MyStruct& rhs) const
+		{
+			return lhs.str == rhs.str &&
+				lhs.vec == rhs.vec &&
+				lhs.m == rhs.m &&
+				lhs.n == rhs.n;
+		}
+	};
 }
 
 int main()
 {
 	// create unordered map and initialize with initializer_list of std::pair
-	std::unordered_map<Pube, std::string> 
+	std::unordered_map<MyStruct, std::string> 
 		map(
 		{
 			{{"you", {23,40},12,92},"you"},
@@ -42,7 +72,7 @@ int main()
 		}
 	);
 
-	std::cout << map[{"you", { 23,40 }, 12, 91}];
+	std::cout << map[{"you", { 23,40 }, 12, 91}];  // should return "never"
 
 	while (!_kbhit());
 	return 0;
